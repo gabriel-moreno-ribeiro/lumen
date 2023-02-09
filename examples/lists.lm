@@ -1,0 +1,28 @@
+# Lists, higher-order helpers and string handling.
+fn map(xs, f) {
+  let out = [];
+  for (let i = 0; i < len(xs); i = i + 1) push(out, f(xs[i]));
+  return out;
+}
+
+fn filter(xs, pred) {
+  let out = [];
+  for (let i = 0; i < len(xs); i = i + 1) if (pred(xs[i])) push(out, xs[i]);
+  return out;
+}
+
+fn reduce(xs, f, init) {
+  let acc = init;
+  for (let i = 0; i < len(xs); i = i + 1) acc = f(acc, xs[i]);
+  return acc;
+}
+
+let nums = range(1, 11);
+let squares = map(nums, fn(x) { return x * x; });
+print squares;
+print filter(squares, fn(x) { return x % 2 == 0; });
+print "sum = " + reduce(nums, fn(a, b) { return a + b; }, 0);
+
+let words = split("the quick brown fox", " ");
+print join(map(words, fn(w) { return w[0]; }), "");
+print len(words) + " words, longest: " + reduce(words, fn(best, w) { if (len(w) > len(best)) return w; return best; }, "");

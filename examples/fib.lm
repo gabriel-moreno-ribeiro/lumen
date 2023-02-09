@@ -1,0 +1,32 @@
+# Recursive and iterative Fibonacci, plus a memoised version using a list as a cache.
+fn fib(n) {
+  if (n < 2) return n;
+  return fib(n - 1) + fib(n - 2);
+}
+
+fn fib_iter(n) {
+  let a = 0;
+  let b = 1;
+  for (let i = 0; i < n; i = i + 1) {
+    let t = a + b;
+    a = b;
+    b = t;
+  }
+  return a;
+}
+
+fn memo_fib() {
+  let cache = [0, 1];
+  fn f(n) {
+    if (n < len(cache)) return cache[n];
+    let v = f(n - 1) + f(n - 2);
+    push(cache, v);
+    return v;
+  }
+  return f;
+}
+
+print fib(20);
+print fib_iter(60);
+let fast = memo_fib();
+print fast(80);
