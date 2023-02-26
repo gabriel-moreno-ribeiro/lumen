@@ -70,6 +70,9 @@ let rec equal a b =
 
 (* ---- built-ins ---------------------------------------------------------- *)
 
+(* Where input() reads lines from; the tests swap this for a scripted list. *)
+let input_source : (unit -> string option) ref = ref (fun () -> In_channel.input_line stdin)
+
 let builtins (output : string -> unit) =
   let num line = function VNum f -> f | v -> error line "expected a number, got %s" (type_name v) in
   let list line = function VList l -> l | v -> error line "expected a list, got %s" (type_name v) in
@@ -116,6 +119,7 @@ let builtins (output : string -> unit) =
        | _ -> error line "split() takes a string and a non-empty separator");
     ("write", fun _ args -> output (String.concat "" (List.map to_string args)); VNil);
     ("clock", fun _ _ -> VNum (Unix_time.now ()));
+    ("input", fun _ _ -> match !input_source () with Some line -> VStr line | None -> VNil);
   ]
 
 (* ---- evaluation --------------------------------------------------------- *)

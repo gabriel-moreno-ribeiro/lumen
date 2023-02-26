@@ -1,0 +1,99 @@
+# A tiny text adventure written in Lumen. Run it with: ./bin/lumen examples/adventure.lm
+# Commands: look, north/south/east/west, take <thing>, inventory, open, help, quit
+
+let rooms = [
+  ["Cell", "You wake up in a damp cell. A rusty door leads north.", ["north", 1]],
+  ["Corridor", "A long corridor lit by one torch. A guard room lies east, the cell south, and a gate north.", ["south", 0, "east", 2, "north", 3]],
+  ["Guard room", "An empty guard room. The guard left in a hurry.", ["west", 1]],
+  ["Gate", "A heavy iron gate. Beyond it, daylight.", ["south", 1]]
+];
+let items = [nil, nil, "key", nil];       # the item lying in each room
+let here = 0;
+let inventory = [];
+let steps = 0;
+
+fn find_exit(room, dir) {
+  let exits = room[2];
+  let i = 0;
+  while (i < len(exits)) {
+    if (exits[i] == dir) return exits[i + 1];
+    i = i + 2;
+  }
+  return nil;
+}
+
+fn has(item) {
+  let i = 0;
+  while (i < len(inventory)) {
+    if (inventory[i] == item) return true;
+    i = i + 1;
+  }
+  return false;
+}
+
+fn describe() {
+  print "== " + rooms[here][0] + " ==";
+  print rooms[here][1];
+  if (items[here] != nil) print "There is a " + items[here] + " here.";
+}
+
+fn go(dir) {
+  let target = find_exit(rooms[here], dir);
+  if (target == nil) {
+    print "You cannot go " + dir + " from here.";
+  } else {
+    here = target;
+    describe();
+  }
+}
+
+fn take(what) {
+  if (items[here] == nil or items[here] != what) {
+    print "There is nothing here to take.";
+  } else {
+    push(inventory, what);
+    items[here] = nil;
+    print "You pick up the " + what + ".";
+  }
+}
+
+fn open_gate() {
+  if (here != 3) {
+    print "There is nothing to open here.";
+  } else {
+    if (has("key")) {
+      print "The key turns with a satisfying clunk. The gate swings open.";
+      print "You escaped in " + steps + " moves!";
+      return true;
+    }
+    print "The gate is locked. Maybe someone dropped a key nearby.";
+  }
+  return false;
+}
+
+describe();
+let playing = true;
+while (playing) {
+  write("> ");
+  let line = input();
+  if (line == nil) {
+    print "";
+    playing = false;
+  } else {
+    let words = split(line + " ", " ");
+    let verb = words[0];
+    steps = steps + 1;
+    if (verb == "look") describe();
+    else if (verb == "north" or verb == "south" or verb == "east" or verb == "west") go(verb);
+    else if (verb == "go" and len(words) > 1) go(words[1]);
+    else if (verb == "take" and len(words) > 1) take(words[1]);
+    else if (verb == "inventory" or verb == "i") {
+      if (len(inventory) == 0) print "You carry nothing.";
+      else print "You carry: " + join(inventory, ", ");
+    }
+    else if (verb == "open") playing = not open_gate();
+    else if (verb == "help") print "Commands: look, north/south/east/west, take <thing>, inventory, open, quit";
+    else if (verb == "quit") playing = false;
+    else print "I do not understand \"" + line + "\". Try help.";
+  }
+}

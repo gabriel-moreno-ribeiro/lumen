@@ -99,5 +99,27 @@ let () =
   expect_error "break outside loop" "break;" "'break' outside";
   expect_error "invalid assignment" "1 = 2;" "invalid assignment target";
 
+  (* input() and the text adventure that ships in examples/ *)
+  let feed lines = let rest = ref lines in Interp.input_source := (fun () -> match !rest with [] -> None | l :: tl -> rest := tl; Some l) in
+  feed [ "hello"; "world" ];
+  expect "input lines" "let a = input(); let b = input(); print a + \" \" + b; print input();" "hello world\nnil\n";
+  let adventure = In_channel.with_open_bin "examples/adventure.lm" In_channel.input_all in
+  feed [ "look"; "take key"; "north"; "east"; "take key"; "inventory"; "west"; "north"; "open"; "north"; "open" ];
+  (match run adventure with
+   | Ok out ->
+     let has s = let n = String.length s and m = String.length out in
+       let rec find i = i + n <= m && (String.sub out i n = s || find (i + 1)) in find 0 in
+     if has "nothing here to take" && has "You pick up the key" && has "key" && has "You escaped" then incr passed
+     else begin incr failed; Printf.printf "FAIL adventure\n  output: %S\n" out end
+   | Error msg -> incr failed; Printf.printf "FAIL adventure\n  error: %s\n" msg);
+  feed [ "north"; "north"; "open"; "dance" ];
+  (match run adventure with
+   | Ok out ->
+     let has s = let n = String.length s and m = String.length out in
+       let rec find i = i + n <= m && (String.sub out i n = s || find (i + 1)) in find 0 in
+     if has "gate is locked" && has "I do not understand" && not (has "You escaped") then incr passed
+     else begin incr failed; Printf.printf "FAIL adventure without key\n  output: %S\n" out end
+   | Error msg -> incr failed; Printf.printf "FAIL adventure without key\n  error: %s\n" msg);
+
   Printf.printf "%d passed, %d failed\n" !passed !failed;
   exit (if !failed = 0 then 0 else 1)
